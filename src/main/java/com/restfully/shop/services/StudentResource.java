@@ -14,6 +14,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -31,9 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import org.w3c.dom.Node;
 /**
  *
@@ -43,102 +41,129 @@ import org.w3c.dom.Node;
 @Path("/student")
 public class StudentResource {
     private Map<String, Student> customerDB = new ConcurrentHashMap<String, Student>();
-    // private AtomicInteger idCounter = new AtomicInteger();
+    private List<String> acceptableGrades = new ArrayList<String>();
+    
+    public StudentResource()
+    {
+        acceptableGrades.add("a");
+        acceptableGrades.add("a+");
+        acceptableGrades.add("a-");
+        acceptableGrades.add("b");
+        acceptableGrades.add("b+");
+        acceptableGrades.add("b-");
+        acceptableGrades.add("c");
+        acceptableGrades.add("c+");
+        acceptableGrades.add("c-");
+        acceptableGrades.add("d");
+        acceptableGrades.add("d+");
+        acceptableGrades.add("d-");
+        acceptableGrades.add("e");
+        acceptableGrades.add("f");
+        acceptableGrades.add("i");
+        acceptableGrades.add("w");
+        acceptableGrades.add("z");
+    }
     
    @GET
    @Produces("application/xml")
    public StreamingOutput getAllStudents( ) {
-
        return new StreamingOutput() {
            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
-               int totalValue = customerDB.size();
-
-               for (int i=0; i < totalValue; i++)
+               if (!customerDB.isEmpty())
                {
-                   final Student student = customerDB.get(i + 1);
-                   outputCustomer(outputStream, student);
+                   PrintStream writer = new PrintStream(outputStream);
+                   writer.println("<student-list>");
+                   for (final Student student : customerDB.values())
+                   {
+                       outputStudent(outputStream, student);
+                   }
+                   writer.println("</student-list>");
+               }
+               else
+               {
+                   PrintStream writer = new PrintStream(outputStream);
+                   writer.println("<student-list></student-list>");
                }
            } 
        };
-
   }
-   
-   
-    @XmlRootElement(name="student-list")
-    public class StudentList {
-	@XmlElement(name="student")
-	public List<Student> studentList = new ArrayList<Student>();
+    @PUT
+    @POST
+    @Path("/{name}/grade/{grade}")
+    @Produces("application/xml")
+    public Response modifyAndCreateGrade(@PathParam("name") String inName, @PathParam("grade")String inGrade)
+    {
+        if (inName == null || inGrade == null || inName.isEmpty() || inGrade.isEmpty())
+        {
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+        inGrade = inGrade.toLowerCase();
+        String setName = inName;
+        inName = inName.toLowerCase();
+        
+        if (!acceptableGrades.contains(inGrade))
+        {
+            System.out.println("bad grade " + inGrade);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
+        Student student = new Student();
+        student.setName(setName);
+        student.setGrade(inGrade);
+        customerDB.put(inName, student);
+        final Student finalStudent = student;
+
+        /*
+        return new StreamingOutput() {
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                outputStudent(outputStream, finalStudent);
+            }
+        };
+        */
+        URI responseURI = URI.create("/student/" + finalStudent.getName() + "/grade/" + finalStudent.getGrade() );
+        return Response.created(responseURI).build();
     }
     
     @GET
-    @Consumes("application/xml")
-    @Path("/student/{name}/{grade}")
-    public Response getGrade(@PathParam("name") String inName, @PathParam("grade")String inGrade)
+    @Path("/{name}")
+    @Produces("application/xml")
+    public StreamingOutput getGrade(@PathParam("name") String inName)
     {
-        Student student = customerDB.get(inName);
+        inName = inName.toLowerCase();
+        final Student student = customerDB.get(inName);
         
         if (student == null)
         {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
                 
-        Response result;
-        return result;
+        return new StreamingOutput() {
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                outputStudent(outputStream, student);
+            }
+        };
     }
     
-   @POST
-   @Consumes("application/xml")
-   public Response createCustomer(InputStream is) {
-      Student student = readCustomer(is);
-      customer.setId(idCounter.incrementAndGet());
-      customerDB.put(customer.getId(), customer);
-      System.out.println("Created customer " + customer.getId());
-      URI responseURI = URI.create("/customers/" + Integer.toString(customer.getId()));
-      Response result = Response.created(responseURI).build();
-      return result;
-   }  
-      protected void outputCustomer(OutputStream os, Customer cust) throws IOException {
-      PrintStream writer = new PrintStream(os);
-      writer.println("<customer id=\"" + Integer.toString(cust.getId()) + "\">");
-      writer.println("   <first-name>" + cust.getFirstName() + "</first-name>");
-      writer.println("   <last-name>" + cust.getLastName() + "</last-name>");
-      writer.println("   <street>" + cust.getStreet() + "</street>");
-      writer.println("   <city>" + cust.getCity() + "</city>");
-      writer.println("   <state>" + cust.getState() + "</state>");
-      writer.println("   <zip>" + cust.getZip() + "</zip>");
-      writer.println("   <country>" + cust.getCountry() + "</country>");
-      writer.println("</customer>");
-   }
-
-   protected Student readStudent(InputStream is) {
-      try {
-         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-         Document doc = builder.parse(is);
-         Element root = doc.getDocumentElement();
-         Student stud = new Student();
-         if (root.getAttribute("id") != null && !root.getAttribute("id").trim().equals(""))
-            stud.setId(Integer.valueOf(root.getAttribute("id")));
-         NodeList nodes = root.getChildNodes();
-         for (int i = 0; i < nodes.getLength(); i++) {
-            try {
-            // Element element = (Element) nodes.item(i);
-            Node node = nodes.item(i);
-            String tagName = node.getNodeName();
-            String value = node.getTextContent();
-            if (tagName.equals("name")) {
-               stud.setName(value);
-            }
-            else if (tagName.equals("grade")) {
-               stud.setGrade(value);
-            }
-            }
-            catch (Exception e) {
-            }
-         }
-         return cust;
-      }
-      catch (Exception e) {
-         throw new WebApplicationException(e, Response.Status.BAD_REQUEST);
-      }
+    @DELETE
+    @Path("/{name}")
+   @Produces("application/xml")
+    public Response deleteCustomer(@PathParam("name") String inName)
+    {
+        inName = inName.toLowerCase();
+        final Student student = customerDB.get(inName);
+        if (student == null)
+        {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        customerDB.remove(inName);
+        return Response.ok().build();
+    }
+    
+      protected void outputStudent(OutputStream os, Student student) throws IOException {
+            PrintStream writer = new PrintStream(os);
+            writer.println("<student>");
+            writer.println("    <name>" + student.getName() + "</name>");
+            writer.println("    <grade>" + student.getGrade() + "</grade>");
+            writer.println("</student>");
    }
 }

@@ -9,6 +9,9 @@ package com.restfully.shop.domain;
  *
  * @author hoff
  */
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class Student {
     private String name;
     private String grade;

@@ -12,7 +12,7 @@
         </servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>com.restfully.shop.services.ShoppingApplication</param-value>
+            <param-value>com.restfully.shop.services.StudentApplication</param-value>
         </init-param>
     </servlet>
 
