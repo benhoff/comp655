@@ -6,25 +6,12 @@
 package com.restfully.shop.services;
 
 import com.restfully.shop.domain.Student;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
@@ -32,19 +19,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.w3c.dom.Node;
+import redis.clients.jedis.Jedis;
+
 /**
  *
  * @author hoff
  */
 
-@Path("/student")
 public class StudentResource {
-    private Map<String, Student> customerDB = new ConcurrentHashMap<String, Student>();
+    private Jedis jedis;
+    // private Map<String, Student> customerDB = new ConcurrentHashMap<String, Student>();
     private List<String> acceptableGrades = new ArrayList<String>();
     
-    public StudentResource()
+    public StudentResource(Jedis inJedis)
     {
+        jedis = inJedis;
+        
         acceptableGrades.add("a");
         acceptableGrades.add("a+");
         acceptableGrades.add("a-");
@@ -64,8 +54,6 @@ public class StudentResource {
         acceptableGrades.add("z");
     }
     
-   @GET
-   @Produces("application/xml")
    public StreamingOutput getAllStudents( ) {
        return new StreamingOutput() {
            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
@@ -87,10 +75,7 @@ public class StudentResource {
            } 
        };
   }
-    @PUT
-    @POST
-    @Path("/{name}/grade/{grade}")
-    @Produces("application/xml")
+
     public Response modifyAndCreateGrade(@PathParam("name") String inName, @PathParam("grade")String inGrade)
     {
         if (inName == null || inGrade == null || inName.isEmpty() || inGrade.isEmpty())
@@ -113,20 +98,11 @@ public class StudentResource {
         customerDB.put(inName, student);
         final Student finalStudent = student;
 
-        /*
-        return new StreamingOutput() {
-            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
-                outputStudent(outputStream, finalStudent);
-            }
-        };
-        */
         URI responseURI = URI.create("/student/" + finalStudent.getName() + "/grade/" + finalStudent.getGrade() );
         return Response.created(responseURI).build();
     }
     
-    @GET
-    @Path("/{name}")
-    @Produces("application/xml")
+
     public StreamingOutput getGrade(@PathParam("name") String inName)
     {
         inName = inName.toLowerCase();
@@ -144,9 +120,6 @@ public class StudentResource {
         };
     }
     
-    @DELETE
-    @Path("/{name}")
-   @Produces("application/xml")
     public Response deleteCustomer(@PathParam("name") String inName)
     {
         inName = inName.toLowerCase();

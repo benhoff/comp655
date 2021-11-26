@@ -5,10 +5,6 @@
  */
 package com.restfully.shop.domain;
 
-/**
- *
- * @author hoff
- */
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,31 +12,39 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
-public class Student {
-    private String name;
-    private String grade;
+/**
+ *
+ * @author hoff
+ */
+public class GradeBook {
+    private String title;
+    private Integer id;
     
-    public void setName(String inName)
+    public GradeBook(int inId, String inTitle)
     {
-        this.name = inName;
+        this.id = inId;
+        this.title = inTitle;
     }
     
-    public String getName()
+    public void setId(int inId)
     {
-        return this.name;
+        this.id = inId;
     }
     
-    public void setGrade(String inGrade)
+    public int getId()
     {
-        this.grade = inGrade;
+        return this.id;
     }
     
-    public String getGrade()
+    public void setTitle(String inTitle)
     {
-        return this.grade;
+        this.title = inTitle;
+    }
+    
+    public String getTitle()
+    {
+        return this.title;
     }
     
     public String serialize()
@@ -53,24 +57,24 @@ public class Student {
             so.flush();
             return bo.toString();
         } catch (IOException ex) {
-            Logger.getLogger(Student.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GradeBook.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
                 so.close();
             } catch (IOException ex) {
-                Logger.getLogger(Student.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(GradeBook.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         return null;
     }
-    
-    static public Student deserialize(String in)
+        
+    static public GradeBook deserialize(String in)
     {
         try {
         byte b[] = in.getBytes();
         ByteArrayInputStream bi = new ByteArrayInputStream(b);
         ObjectInputStream si = new ObjectInputStream(bi);
-        return (Student) si.readObject();
+        return (GradeBook) si.readObject();
         } catch (Exception e)
         {
             System.out.println(e);
