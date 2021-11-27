@@ -14,12 +14,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class Student {
+public class Student implements Serializable
+{
     private String name;
     private String grade;
     
@@ -45,37 +47,16 @@ public class Student {
     
     public String serialize()
     {
-        ObjectOutputStream so = null;
-        try {
-            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-            so = new ObjectOutputStream(bo);
-            so.writeObject(this);
-            so.flush();
-            return bo.toString();
-        } catch (IOException ex) {
-            Logger.getLogger(Student.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                so.close();
-            } catch (IOException ex) {
-                Logger.getLogger(Student.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return null;
+        return this.grade + " " + this.name;
     }
     
     static public Student deserialize(String in)
     {
-        try {
-        byte b[] = in.getBytes();
-        ByteArrayInputStream bi = new ByteArrayInputStream(b);
-        ObjectInputStream si = new ObjectInputStream(bi);
-        return (Student) si.readObject();
-        } catch (Exception e)
-        {
-            System.out.println(e);
-        }
-        return null;
+        String[] split = in.split(" ", 2);
+        Student stud = new Student();
+        stud.setName(split[1]);
+        stud.setGrade(split[0]);
+        return stud;
     }
     
     

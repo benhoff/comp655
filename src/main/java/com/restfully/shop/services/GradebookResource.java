@@ -106,8 +106,6 @@ public class GradebookResource {
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
         inName = inName.toLowerCase();
-        // Check if the gradebook exists, if does say "OK, OK"
-        // FIXME: Storing by Id
         if (jedis.hexists("gradebook", inName))
         {
             // FIXME: return the URI of the location

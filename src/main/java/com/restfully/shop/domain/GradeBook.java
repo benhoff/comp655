@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,9 +18,14 @@ import java.util.logging.Logger;
  *
  * @author hoff
  */
-public class GradeBook {
+public class GradeBook implements Serializable {
     private String title;
     private Integer id;
+    
+    public GradeBook()
+    {
+        
+    }
     
     public GradeBook(int inId, String inTitle)
     {
@@ -49,37 +55,21 @@ public class GradeBook {
     
     public String serialize()
     {
-        ObjectOutputStream so = null;
-        try {
-            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-            so = new ObjectOutputStream(bo);
-            so.writeObject(this);
-            so.flush();
-            return bo.toString();
-        } catch (IOException ex) {
-            Logger.getLogger(GradeBook.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                so.close();
-            } catch (IOException ex) {
-                Logger.getLogger(GradeBook.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return null;
+        return Integer.toString(this.id) + " " + this.title;
     }
         
     static public GradeBook deserialize(String in)
     {
-        try {
-        byte b[] = in.getBytes();
-        ByteArrayInputStream bi = new ByteArrayInputStream(b);
-        ObjectInputStream si = new ObjectInputStream(bi);
-        return (GradeBook) si.readObject();
-        } catch (Exception e)
+        String[] split = in.split(" ", 2);
+        GradeBook book = new GradeBook();
+        for (int i=0; i < split.length; i++)
         {
-            System.out.println(e);
+            if (i == 0)
+                book.setId(Integer.parseInt(split[i]));
+            if (i == 1)
+                book.setTitle(split[i]);
         }
-        return null;
+        return book;
     }
     
     
