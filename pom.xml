@@ -7,7 +7,7 @@
     <artifactId>workbook-ex03_1</artifactId>
     <version>1.0</version>
     <packaging>war</packaging>
-    <name>student</name>
+    <name>primary</name>
     <description/>
 
     <dependencies>

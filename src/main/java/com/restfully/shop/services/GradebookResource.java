@@ -215,7 +215,7 @@ public class GradebookResource {
     public Response deleteStudent(@PathParam("id") int inId, @PathParam("name") String inName)
     {
         inName = inName.toLowerCase();
-        final Map<String,String> studentDatabase = jedis.hgetAll(Integer.toString(inId));
+        Map<String,String> studentDatabase = jedis.hgetAll(Integer.toString(inId));
         if (studentDatabase == null)
         {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -225,9 +225,11 @@ public class GradebookResource {
         {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        final Student student = Student.deserialize(value);
-        studentDatabase.remove(inName);
-        jedis.hset(Integer.toString(inId), studentDatabase);
+        jedis.hdel(Integer.toString(inId), inName);
+        // studentDatabase.remove(inName);
+        // jedis.hset(Integer.toString(inId), studentDatabase);
+        Map<String,String> check = jedis.hgetAll(Integer.toString(inId));
+
         return Response.ok().build();
     }
     
@@ -243,6 +245,7 @@ public class GradebookResource {
         {
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
+        
         final Map<String,String> studentDatabase = jedis.hgetAll(Integer.toString(inId));
         if (studentDatabase == null)
         {
@@ -255,15 +258,20 @@ public class GradebookResource {
         
         if (!acceptableGrades.contains(inGrade))
         {
-            System.out.println("bad grade " + inGrade);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
         final String value = studentDatabase.get(inName);
+        Student student;
         if (value == null)
         {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
+            student = new Student();
+            student.setName(inName);
         }
-        Student student = Student.deserialize(value);
+        else
+        {
+            student = Student.deserialize(value);
+        }
+            
         student.setGrade(inGrade);
         studentDatabase.put(inName, student.serialize());
         jedis.hset(Integer.toString(inId), studentDatabase);
